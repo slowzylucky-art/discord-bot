@@ -6,7 +6,7 @@ import sys
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
-# === WISPBYTE / RENDER KANDIRMA SİSTEMİ (Keep-Alive) ===
+# === KEEP-ALIVE (Render Uyutmama Sistemi) ===
 class BasitSunucu(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -17,7 +17,7 @@ class BasitSunucu(BaseHTTPRequestHandler):
 
 def web_sunucusu_baslat():
     try:
-        port = int(os.environ.get('PORT', 8080)) # Render otomatik PORT verir, burası hayati önem taşıyor
+        port = int(os.environ.get('PORT', 8080))
         server = HTTPServer(('0.0.0.0', port), BasitSunucu)
         server.serve_forever()
     except Exception as e:
@@ -26,14 +26,11 @@ def web_sunucusu_baslat():
 threading.Thread(target=web_sunucusu_baslat, daemon=True).start()
 # ===============================================
 
-# === SENİN AYARLARIN ===
+# === AYARLAR ===
 TOKEN = """MTQ3NzUwNDE3ODEzNzA3MTY3Ng.GEShna.lvXzjn6FJvLETgVkWggkiIkDGhLt1l6alwNX24""".strip()
-
-KANAL_ID = 1532840274580078612 # Ticaret mesajı atılacak metin kanalı
-SES_KANALI_ID = 1525192508185903125 # 7/24 oturacağı ses kanalı
-
+KANAL_ID = 1532840274580078612 # İstediğin metin kanalı
 BEKLEME_SURESI_DAKIKA = 3
-RPC_YAZISI = "TRADER" 
+RPC_YAZISI = "TRADER"
 
 MESAJ = """**:moneybag: BUYING STEAL A BRAINROT (SAB) :moneybag:
 Boppin Bunny / Jolly Sahur / Festive 67 / Capitano / Popcuro / Clover Ketu / Pegasus / Burguro — $1.00 Each
@@ -45,27 +42,17 @@ La Casa                                                               — $6.50 
 Dragon Cannelloni                                          — $12.00 Each
 Hydra Dragon                                                   — $16.00 Each
 :white_check_mark: Buying ALL Brainrots at Good Prices — DM Me and Send Your Price. **"""
-# =======================
+# ===============
 
 class OtoMesajci(discord.Client):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
     async def on_ready(self):
-        print(f'Giris yapildi: {self.user} | Hesap Artik Aktif!')
+        print(f'Giris yapildi: {self.user} | Oto-Mesaj Sistemi Aktif!')
         
         oyun = discord.Activity(type=discord.ActivityType.playing, name=RPC_YAZISI)
         await self.change_presence(status=discord.Status.online, activity=oyun)
-        
-        try:
-            ses_kanali = self.get_channel(SES_KANALI_ID)
-            if ses_kanali:
-                await ses_kanali.guild.change_voice_state(channel=ses_kanali, self_mute=True, self_deaf=True)
-                print(f"7/24 Sese basariyla oturuldu: {ses_kanali.name}")
-            else:
-                print("HATA: Ses kanali bulunamadi!")
-        except Exception as e:
-            print(f"Sese girerken hata: {e}")
 
         if not self.mesaj_gonder.is_running():
             self.mesaj_gonder.start()
@@ -76,7 +63,9 @@ class OtoMesajci(discord.Client):
             kanal = self.get_channel(KANAL_ID)
             if kanal:
                 await kanal.send(MESAJ)
-                print("Basarili! Yeni mesaj gonderildi. 3 dakika bekleniyor...")
+                print("Basarili! Mesaj gonderildi. 3 dakika bekleniyor...")
+            else:
+                print(f"HATA: Kanal bulunamadi! ID'yi kontrol et: {KANAL_ID}")
         except Exception as e:
             print(f"Mesaj atarken hata: {e}")
 
@@ -91,6 +80,6 @@ try:
 except Exception as e:
     print(f"Baglanti koptu: {e}")
 finally:
-    print("Sistem durdu! 5 saniye icinde otomatik olarak kendini baştan baslatiyor...")
+    print("Sistem durdu, 5 saniye icinde yeniden baslatiliyor...")
     time.sleep(5)
     os.execv(sys.executable, ['python'] + sys.argv)
